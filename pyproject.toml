@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "bookstore"
+version = "0.1.0"
+description = "Bookstore API"
+authors = ["Manoel"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pytest = "^8.2.0"
+factory-boy = "^3.3.0"
+django = "^5.0.5"
+django-admin = "^2.0.2"
+
+
+[tool.poetry.group.dev.dependencies]
+black = {git = "https://github.com/psf/black"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
