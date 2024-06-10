@@ -1,7 +1,7 @@
-# `python-base` sets up all our shared environment variables
-FROM python:3.12-slim-bookworm as python-base
+# Use uma imagem base oficial do Python
+FROM python:3.8.1-slim as python-base
 
-# python
+# Defina variáveis de ambiente
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=off \
@@ -14,32 +14,37 @@ ENV PYTHONUNBUFFERED=1 \
     PYSETUP_PATH="/opt/pysetup" \
     VENV_PATH="/opt/pysetup/.venv"
 
-# prepend poetry and venv to path
+# Adicione Poetry e o virtualenv ao PATH
 ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        build-essential \
-        libpq-dev gcc \
-        libyaml-dev \
-    && apt-get clean \
+# Instale dependências do sistema
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    curl \
+    build-essential \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# install poetry - respects $POETRY_VERSION & $POETRY_HOME
+# Instale o Poetry
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
-# copy project requirement files here to ensure they will be cached.
+# Defina o diretório de trabalho para a instalação das dependências do projeto
 WORKDIR $PYSETUP_PATH
+
+# Copie os arquivos de configuração do Poetry
 COPY poetry.lock pyproject.toml ./
 
-# install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
-RUN poetry install --only main
+# Instale apenas as dependências principais (sem dev)
+RUN poetry install --no-dev
 
+# Defina o diretório de trabalho para a aplicação
 WORKDIR /app
 
+# Copie o restante dos arquivos do projeto
 COPY . /app/
 
+# Exponha a porta 8000
 EXPOSE 8000
 
+# Defina o comando padrão para executar o servidor Django
 CMD ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
