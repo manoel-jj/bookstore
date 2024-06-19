@@ -1,50 +1,29 @@
-# Use uma imagem base oficial do Python
-FROM python:3.8.1-slim as python-base
+ARG PYTHON_VERSION=3.12-slim-bullseye
 
-# Defina variáveis de ambiente
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=off \
-    PIP_DISABLE_PIP_VERSION_CHECK=on \
-    PIP_DEFAULT_TIMEOUT=100 \
-    POETRY_VERSION=1.5.1 \
-    POETRY_HOME="/opt/poetry" \
-    POETRY_VIRTUALENVS_IN_PROJECT=true \
-    POETRY_NO_INTERACTION=1 \
-    PYSETUP_PATH="/opt/pysetup" \
-    VENV_PATH="/opt/pysetup/.venv"
+FROM python:${PYTHON_VERSION}
 
-# Adicione Poetry e o virtualenv ao PATH
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Instale dependências do sistema
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    curl \
-    build-essential \
+# install psycopg2 dependencies.
+RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Instale o Poetry
-RUN curl -sSL https://install.python-poetry.org | python3 -
+RUN mkdir -p /code
 
-# Defina o diretório de trabalho para a instalação das dependências do projeto
-WORKDIR $PYSETUP_PATH
+WORKDIR /code
 
-# Copie os arquivos de configuração do Poetry
-COPY poetry.lock pyproject.toml ./
+RUN pip install poetry
+COPY pyproject.toml poetry.lock /code/
+RUN poetry config virtualenvs.create false
+RUN poetry install --only main --no-root --no-interaction
+COPY . /code
 
-# Instale apenas as dependências principais (sem dev)
-RUN poetry install --no-dev
+ENV SECRET_KEY "04zfCfc0u3Gnu7vngjZYeqFUV4Kpi1Xcj5pN8QuoJ9mtCWumJW"
+RUN python manage.py collectstatic --noinput
 
-# Defina o diretório de trabalho para a aplicação
-WORKDIR /app
-
-# Copie o restante dos arquivos do projeto
-COPY . /app/
-
-# Exponha a porta 8000
 EXPOSE 8000
 
-# Defina o comando padrão para executar o servidor Django
-CMD ["poetry", "run", "python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", ":8000", "--workers", "2", "bookstore.wsgi"]

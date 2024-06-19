@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-jytfto1t9bo9ywpgo!y$^i6uh=w*x%zx*i%0ag%6s+3+utmp6-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0','ebac-bookstore-manoel-little-moon-3659.fly.dev']
 
 # Application definition
 
@@ -73,6 +73,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'bookstore.wsgi.application'
 
